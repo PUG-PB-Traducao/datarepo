@@ -1,0 +1,25 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pytest = "*"
+python-dotenv = "*"
+pylint = "*"
+black = "*"
+rope = "*"
+
+[packages]
+fastapi = {extras = ["all"],version = "*"}
+sqlalchemy = "*"
+psycopg2-binary = "*"
+docker-compose = "*"
+uvicorn = "*"
+fastapi-sqlalchemy = {editable = true,path = "./fastapi-sqlalchemy"}
+
+[requires]
+python_version = "3.8"
+
+[pipenv]
+allow_prereleases = true
