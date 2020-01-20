@@ -1,8 +1,10 @@
+import os
+
+from dotenv import find_dotenv, load_dotenv
+from fastapi_sqlalchemy import DBSessionMiddleware, db
 from sqlalchemy import MetaData, create_engine
 
-import os
-from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(find_dotenv())
 
 PG_SERVER = os.environ.get('PG_SERVER')
 PG_USER = os.environ.get('PG_USR')
@@ -15,14 +17,19 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 SQLALCHEMY_COMMIT_ON_TEARDOWN = True
 SQLALCHEMY_DATABASE_URI = DB_URL
 
-convention = {
-    "ix": 'ix_%(column_0_label)s',
-    "uk": "uk_%(table_name)s_%(column_0_name)s",
-    "ck": "ck_%(table_name)s_%(constraint_name)s",
-    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-    "pk": "pk_%(table_name)s"
-}
+# TODO: Validar se é pertinente o contexto!
+# convention = {
+#     "ix": 'ix_%(column_0_label)s',
+#     "uk": "uk_%(table_name)s_%(column_0_name)s",
+#     "ck": "ck_%(table_name)s_%(constraint_name)s",
+#     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+#     "pk": "pk_%(table_name)s"
+# }
 
-metadata = MetaData(naming_convention=convention)
-db = create_engine(DB_URL)
-metadata.create_all(db)
+
+def configure_db(app):
+    app.add_middleware(DBSessionMiddleware, db_url=DB_URL)
+
+
+# Instantiate base for models!
+Base = declarative_base()
