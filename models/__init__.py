@@ -2,5 +2,7 @@
 # initializing db in app.models.base instead of in app.__init__.py
 # to prevent circular dependencies
 from .base import db
-from .user import UserApi
-from .places import Country, PlaceType, Place
+from .core import Permissions, Post, Selected, User
+
+# from .user import UserApi
+# from .places import Country, PlaceType, Place
