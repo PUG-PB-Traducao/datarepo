@@ -10,20 +10,6 @@ from sqlalchemy.orm import relationship
 from .base import Base
 
 
-class Permissions(Base):
-    __tablename__ = "permissions"
-
-    id = Column(Integer, autoincrement=True, primary_key=True)
-    is_staff = Column(Boolean, nullable=False)
-    is_superuser = Column(Boolean, nullable=False)
-    is_type = Column(
-        Enum('admin', 'editor', 'feeder', name='types'),
-        nullable=False, server_default=("admin"))
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
 class User(Base):
     __tablename__ = 'users'
 
@@ -34,14 +20,22 @@ class User(Base):
     first_name = Column(String(30), nullable=False)
     last_name = Column(String(150), nullable=False)
     email = Column(String(254), nullable=False)
-    date_joined = Column(
+    is_active = Column(Boolean, nullable=False)
+    last_login = Column(
+        DateTime, nullable=False,
+        default=datetime.utcnow().strptime("%d-%m-%y %H:%M:%S"))
+    registered_at = Column(
         DateTime, nullable=False,
         default=datetime.utcnow().strptime("%d-%m-%y %H:%M:%S"))
     permission_id = Column(
         Integer, ForeignKey('permissions.id'),
         nullable=False)
+    post_id = Column(
+        Integer, ForeignKey('posts.id'),
+        nullable=False)
 
     permission = db.relationship('Permissions')
+    post = db.relationship('Post')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -57,23 +51,67 @@ class User(Base):
         return hashpw(password.encode('utf8'), gensalt()).decode('utf8')
 
 
+class Permission(Base):
+    __tablename__ = "permissions"
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    role_id = Column(
+        Integer, ForeignKey('roles.id'),
+        nullable=False)
+    user_id = Column(
+        Integer, ForeignKey('users.id'),
+        nullable=False)
+
+    user = db.relationship('User')
+    post = db.relationship('Role')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+class Role(Base):
+    __tablename__ = "roles"
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    description = Column(String)
+    created_at = Column(
+        DateTime, nullable=False,
+        default=datetime.utcnow().strptime("%d-%m-%y %H:%M:%S"))
+    is_admin = Column(Boolean, nullable=False)
+    permission_id = Column(
+        Integer, ForeignKey('permissions.id'),
+        nullable=False)
+    permission = db.relationship('Permission')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
 class Post(Base):
     __tablename__ = "posts"
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True)
+    user_id = Column(
+        Integer, ForeignKey('users.id'),
+        nullable=False)
     link = Column(String)
-    status = Column(
-        Enum('inserted', 'active', 'finished', name='status_types'),
-        nullable=False, server_default=("inserted"))
-    date_inserted = Column(
+    translate_notification = Column(Boolean, nullable=False)
+    translate_link = Column(String)
+    translated_link = Column(String)
+    likes = Column(Integer, default=0)
+    created_at = Column(
         DateTime, nullable=False,
         default=datetime.utcnow().strptime("%d-%m-%y %H:%M:%S"))
+    approved_at = Column(DateTime, nullable=False)
+    approved_by = Column(
+        Integer, ForeignKey('users.id'),
+        nullable=True)
+    user = db.relationship('User')
+    approver = db.relationship('User')
 
-    def __init__(self, id, status, link):
-        self.id = id
-        self.link = link
-        self.status = status
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def __repr__(self):
         return f"<Post UUID: {self.uuid}>"
